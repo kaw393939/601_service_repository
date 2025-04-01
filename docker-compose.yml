@@ -1,0 +1,76 @@
+# Docker Compose file for defining and running multi-container Docker applications.
+# This file defines three services: web (our FastAPI app), db (PostgreSQL), and pgadmin.
+
+services:
+  # The 'web' service: builds and runs our FastAPI application.
+  web:
+    # build: Specifies the context (current directory '.') for building the Docker image.
+    # It will look for a Dockerfile in this directory.
+    build: .
+    # ports: Maps ports between the host machine and the container.
+    # "8000:80": Maps port 8000 on the host to port 80 inside the container (where uvicorn runs).
+    ports:
+      - "8000:80" # Map host port 8000 to container port 80
+    # volumes: Mounts host paths or named volumes into the container.
+    # ".:/app": Mounts the entire project directory from the host into /app inside the container.
+    # This allows code changes on the host to be reflected immediately inside the container,
+    # which is essential for development with features like uvicorn's --reload.
+    volumes:
+      - .:/app # Mount the current directory into the container's /app directory
+    # environment: Sets environment variables inside the container.
+    environment:
+      # WATCHFILES_FORCE_POLLING=true: Helps file change detection for hot-reloading
+      # work more reliably on some systems (like Docker Desktop on Windows/macOS).
+      - WATCHFILES_FORCE_POLLING=true # Helps with detecting changes inside Docker on some systems
+      # DATABASE_URL: The connection string for SQLAlchemy to connect to the PostgreSQL database.
+      # Format: postgresql://<user>:<password>@<host>:<port>/<database_name>
+      # 'db' is the hostname of the db service defined below (Docker Compose handles DNS).
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+    # depends_on: Specifies dependencies between services.
+    # The 'web' service will wait for the 'db' service to be started (but not necessarily ready)
+    # before it starts itself.
+    depends_on:
+      - db
+
+  # The 'db' service: runs the PostgreSQL database.
+  db:
+    # image: Specifies the Docker image to use.
+    # postgres:15 uses the official PostgreSQL image, version 15.
+    image: postgres:15
+    # volumes: Mounts a named volume for data persistence.
+    # "db-data:/var/lib/postgresql/data": Mounts the named volume 'db-data' to the directory
+    # where PostgreSQL stores its data. This ensures data survives container restarts.
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # environment: Sets PostgreSQL configuration variables.
+    # These are specific to the official postgres image.
+    environment:
+      - POSTGRES_DB=mydatabase # Sets the default database name.
+      - POSTGRES_USER=user     # Sets the default database user.
+      - POSTGRES_PASSWORD=password # Sets the password for the default user. **CHANGE THIS IN PRODUCTION!**
+
+  # The 'pgadmin' service: runs pgAdmin, a web-based GUI for PostgreSQL.
+  pgadmin:
+    # image: Uses the official pgAdmin 4 image.
+    image: dpage/pgadmin4
+    # environment: Sets pgAdmin configuration variables.
+    environment:
+      # Sets the default login email for pgAdmin UI.
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      # Sets the default login password for pgAdmin UI. **CHANGE THIS IN PRODUCTION!**
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    # ports: Maps host port 5050 to container port 80 (where pgAdmin's web server runs).
+    ports:
+      - "5050:80"
+    # depends_on: Ensures pgAdmin starts after the database service.
+    depends_on:
+      - db
+    # volumes: Persists pgAdmin configuration and server definitions.
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin # Persist pgAdmin configuration/servers
+
+# volumes: Defines named volumes used by the services.
+# Docker manages these volumes.
+volumes:
+  db-data: # Volume for PostgreSQL data persistence.
+  pgadmin-data: # Volume for pgAdmin configuration persistence.

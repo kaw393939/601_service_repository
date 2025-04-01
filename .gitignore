@@ -1,0 +1,47 @@
+# Purpose: Specifies intentionally untracked files that Git should ignore.
+# This prevents committing sensitive information, build artifacts, or environment-specific files.
+
+# --- General ---
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# --- Virtual Environments ---
+.venv/
+virtualenv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --- IDE / Editor Files ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- Testing ---
+.pytest_cache/
+htmlcov/
+.coverage
+
+# --- Docker ---
+# Depending on your setup, you might want to ignore docker-compose logs or data volumes
+# if they happen to be created within the project directory (though using named volumes is preferred)
+# db-data/
+# pgadmin-data/
+
+# --- Build artifacts ---
+dist/
+build/
+*.egg-info/
